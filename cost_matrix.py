@@ -13,7 +13,6 @@ def generate_cost_matrix(num_cities, seed):
 
     return cost_matrix
 
-# Example usage:
 seeds = [1, 2, 3, 4, 5]
 num_cities_values = [5, 10, 11, 12]
 
