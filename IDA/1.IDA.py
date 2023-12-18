@@ -1,0 +1,1 @@
+# IDA* with heuristic function h(n)=0.

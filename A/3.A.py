@@ -1,0 +1,1 @@
+# A* with h(n)=0 (i.e., Dijkstra’s algorithm).

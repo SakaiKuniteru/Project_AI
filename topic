@@ -1,0 +1,71 @@
+In this project, you will work as a team consisting of 4-5 members. You need to implement a few search algorithms which calculate optimal solution costs for the Traveling Salesperson Problem (TSP), a well-known NP-hard problem, and perform performance comparisons. 
+
+The TSP Problem
+In TSP, given N cities, starting with the first city, a salesperson must visit each city exactly once and must finally come back to the first city. The salesperson must travel with the smallest sum of the edge costs on the route taken by them. See Wikipedia: https://en.wikipedia.org/wiki/Travelling_salesman_problem
+
+Project description
+You need to implement the following algorithms and compare performance as described in this document:
+1. IDA* with heuristic function h(n)=0
+2. IDA* with the min-out heuristic function. I will describe the details of the min-out heuristic function later. 
+3. A* with h(n)=0 (i.e., Dijkstra’s algorithm)
+4. A* with the min-out heuristic function
+
+You can use any programming language. Below are the specifications on the programs you write. 
+    * For N cities, let an id of each city be 0, 1, 2, …, and N-1. Assume that the salesperson starts with id=0 and comes back to the state with id=0. 
+        - Let i and j be the ids of two cities (i and j are different). Cities i and j are always connected, and cost(i, j) is an integer satisfying 1<=cost(i, j)<=100.
+        - Assume that search is currently at node n with city i. The min-out heuristic h(n) is defined as h(n)=min(cost(i, j1), cost(i, j2), …., cost(i, jk)) where j1, j2, …, jk are the ids of the cities which can be visited from node n (i.e., ignore the cities already visited).
+        - You need to measure experiments for the number of cities N=5, 10, 11, and 12. For each N, prepare five problems for performance evaluation, summarized as follows: 
+            + For each problem, cost(i, j) needs to be initialized with range [1, 100] using a pseudo random generator. 
+            + To ensure different algorithms solve the same problems, seeds need to be set to 1, 2, 3, 4, and 5. 
+        - If you have never used the pseudo random generator and/or seed, search for an instruction on the Internet as necessary: 
+            + https://docs.python.org/3/library/random.html
+            + https://en.cppreference.com/w/cpp/numeric/random
+        - The time limit for each problem is set to 20 minutes. 
+        - In your project report, prepare a table which summarizes the performance of each algorithm and for each N (the number of cities). The table needs to include the following information: 
+            + The number of solved problems
+            + Average run time
+            + Average optimal path cost
+            + Average number of expanded nodes
+            + Average number of generated nodes
+        - In calculating average numbers for all criteria except the average runtime, use the number of solved problems as a denominator. Truncate values as you like when reporting the numbers. Write “NA” if an algorithm does not solve any problems. 
+        - In calculating the average run time, assume the run time is 20 minutes when a problem is not solved, and use 5 as a denominator. Truncate values as necessary where the performance difference between algorithms is observable. 
+        - This assignment requires you to measure time within a problem. Either real time or CPU time is acceptable. The following links describe functions to measure time. Search for information on the Internet as necessary when you have never measured time before. 
+            + https://docs.python.org/ja/3/library/time.html#time.time
+            + time - cppreference.com
+        - You can also use the Unix command “time”, which measures the run time of a process.
+            + https://en.wikipedia.org/wiki/Time_%28Unix%29
+        - A simple state representation is: 
+            class State:
+                bool visited[N]; // flags for visited cities (true if visited, true if coming back for id=0)
+                int num_visited; // number of visited cities
+                int current_id; // id of the current city
+        - With the above implementation, search space never creates a cycle (repeating the same state on the path of search). The states where the salesperson at city 0 in the beginning and at the end are different. This means that you do not need a cycle check in your implementations. 
+            + At city 0 in the beginning, all visited flags are false.
+            + When coming back to city 0, all visited flags are true. 
+        - For the case of A*, you need a priority queue. You can use existing libraries such as:
+            + https://docs.python.org/3/library/heapq.html
+            + https://en.cppreference.com/w/cpp/container/priority_queue
+        - For the case of A*, you need to implement the structure of REACHED embodied as follows. Let N be the number of cities. Defining the hash value S of a state as follows leads to constructing a perfect hash function. Therefore, REACHED is implemented as an array of size N×2^N.
+            + S=ID×2^(N)+a0+a1+…+aN-1, where ai=0 if visited[i]=false, and ai=2i if visited[i]=true, and ID is the id of the current city. 
+        - Considering the difference in speed in various programming languages, points will not be deducted just because of the slow run time stemming from program languages themselves, although a faster program in real time is better in practice. 
+        - Using classes (e.g., in C++/Python) is not mandatory to implement search, although encapsulation with classes is much better from a viewpoint of readability of the source code in practice. 
+        - Because you implement algorithms to find optimal solutions, the optimal solution costs must be identical if the same problem is solved by different algorithms. Please note this and make sure if your implementation is correct or not.
+            + For example, it should be easy for each algorithm to solve the case with 5 cities. If their optimal solution costs are different, your implementation should have a bug somewhere. 
+            + Considering tied optimal scores may exist, optimal routes may be different. 
+        - You need to give brief explanations to each function/method, namely their arguments and returned values, and what they do. You need to write such comments in the source code.
+ 
+    * Advanced topic (bonus points if solved)
+        - In the lectures, you learned that IDA* suffers from a drawback of reexpanding the same nodes among different iterations. A hash table (aka a transposition table) can alleviate the issue of IDA*. See the following link:  https://webdocs.cs.ualberta.ca/~tony/TechnicalReports/tr-ri-93-120.pdf
+        - Assume that you are allowed to preserve all the states in the hash table as described for A* (i.e., REACHED). Implement this enhanced version of IDA* (Figure 7 shown in the Appendix at the link above) to solve the TSP with h(n)=0 as well as the min-out heuristic. 
+        - Compare the performance of the other algorithms implemented above. 
+
+    * Submission
+        - Due date: 11:59 PM December 22nd (sharp deadline)
+        - Where to submit: Dr. Kien takes care of receiving the files. Please follow his guideline. 
+        - Submit one zipped file which contains source code and a pdf file of the performance comparison tables. 
+ 
+    * Important Notes
+        - The team members will get the same marks. Please work effectively as a team. 
+        - Even if you cannot complete the project, submit the source code and tables showing what you have done by the due date.
+        - You might need a lot of time to implement these algorithms if you are not used to programming. Start working on it as soon as possible. 
+        - There are many places where you may have difficulties, including how to write a non-essential part of the code (i.e., the part not related to the algorithms), and how to debug the source code, etc.  Be sure to consult with me sooner if you have encountered a difficulty. Depending on the situation, I plan to give you hints and/or supplementary information as necessary. 
