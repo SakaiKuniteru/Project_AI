@@ -50,11 +50,10 @@ def tsp_ida_star(cost_matrix):
 
     print(f"Optimal Path: {optimal_path}")
     print(f"Optimal Cost: {optimal_cost}")
-    print(f"Running time: {end_time - start_time:.4f} seconds")
+    print(f"Running time: {end_time - start_time:.4f} seconds\n")
     print(f"Expanded Nodes: {expanded_nodes}")
-    print(f"Created Nodes: {created_nodes}\n")
+    print(f"Created Nodes: {created_nodes}")
     return optimal_cost, end_time - start_time, expanded_nodes, created_nodes
-
 seeds = [1, 2, 3, 4, 5]
 num_cities_values = [5, 10, 11, 12]
 

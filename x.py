@@ -1,6 +1,7 @@
 import random
 import sys
 import time
+from collections import defaultdict
 
 def generate_cost_matrix(num_cities, seed):
     random.seed(seed)
@@ -14,9 +15,16 @@ def generate_cost_matrix(num_cities, seed):
 
     return cost_matrix
 
-def tsp_ida_star(cost_matrix):
-    def dfs(node, path, cost, visited):
+def tsp_ida_star_advanced(cost_matrix):
+    def dfs(node, path, cost, visited, lower_bound):
         nonlocal cost_matrix, num_cities, optimal_path, optimal_cost, expanded_nodes, created_nodes
+
+        path_hash = hash(tuple(path))  # Calculate a hash for the current path
+
+        if path_hash in reached and reached[path_hash] <= cost:
+            return
+
+        reached[path_hash] = cost
 
         if len(path) == num_cities:
             total_cost = cost + cost_matrix[node][path[0]]
@@ -30,7 +38,11 @@ def tsp_ida_star(cost_matrix):
                 expanded_nodes += 1
                 created_nodes += 1
                 visited.add(next_node)
-                dfs(next_node, path + [next_node], new_cost, visited)
+
+                # Update the lower bound for the next iteration
+                new_lower_bound = lower_bound - cost_matrix[node][next_node]
+
+                dfs(next_node, path + [next_node], new_cost, visited, new_lower_bound)
                 visited.remove(next_node)
 
     num_cities = len(cost_matrix)
@@ -38,21 +50,24 @@ def tsp_ida_star(cost_matrix):
     optimal_cost = sys.maxsize
     expanded_nodes = 0
     created_nodes = 0
+    reached = defaultdict(int)
 
     initial_node = 0
     initial_path = [initial_node]
     initial_cost = 0
+    initial_lower_bound = sum(min(row) for row in cost_matrix)  # Initial lower bound
+
     visited = {initial_node}
 
     start_time = time.time()
-    dfs(initial_node, initial_path, initial_cost, visited)
+    dfs(initial_node, initial_path, initial_cost, visited, initial_lower_bound)
     end_time = time.time()
 
     print(f"Optimal Path: {optimal_path}")
     print(f"Optimal Cost: {optimal_cost}")
-    print(f"Running time: {end_time - start_time:.4f} seconds")
+    print(f"Running time: {end_time - start_time:.4f} seconds\n")
     print(f"Expanded Nodes: {expanded_nodes}")
-    print(f"Created Nodes: {created_nodes}\n")
+    print(f"Created Nodes: {created_nodes}")
     return optimal_cost, end_time - start_time, expanded_nodes, created_nodes
 
 seeds = [1, 2, 3, 4, 5]
@@ -77,7 +92,7 @@ for num_cities in num_cities_values:
                 print(row)
             print()
 
-            optimal_cost, expanded_nodes, created_nodes, running_time = tsp_ida_star(cost_matrix)
+            optimal_cost, expanded_nodes, created_nodes, running_time = tsp_ida_star_advanced(cost_matrix)
             total_optimal_cost += optimal_cost
             total_expanded_nodes += expanded_nodes
             total_created_nodes += created_nodes
