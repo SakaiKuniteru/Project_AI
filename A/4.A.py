@@ -58,7 +58,14 @@ def main():
             start_time = time.time()
             result, optimal_path = a_star(N, costs)
             end_time = time.time()
-            print(f'N={N}, seed={seed}, result={result}, time={end_time - start_time}, path={optimal_path}')
+            for row in costs:
+                print(row)
+            print()
+
+            print(f'N={N}, seed={seed}')
+            print(f'result={result}')
+            print(f'time={end_time - start_time}')
+            print(f'path={optimal_path}\n')
 
 
 if __name__ == "__main__":
