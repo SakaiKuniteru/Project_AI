@@ -1,105 +1,161 @@
 # A* with h(n)=0 (i.e., Dijkstra’s algorithm).
-import time
-import statistics
-import random
 import heapq
+import random
+import sys
+import time
 
-class State:
-    def __init__(self, num_cities):
-        self.visited = [False] * num_cities
-        self.num_visited = 0
-        self.current_id = 0
-        self.path = []
+def generate_cost_matrix(num_cities, seed):
+    """
+    Tạo ma trận chi phí ngẫu nhiên cho các thành phố.
 
-    def __lt__(self, other):
-        return 0  # You can customize this based on your comparison logic
+    Parameters:
+        - num_cities (int): Số lượng thành phố.
+        - seed (int): Hạt giống để có kết quả ngẫu nhiên nhất định.
 
-def tsp_dijkstra(graph, seed, num_cities):
-    initial_state = State(num_cities)
-    priority_queue = [(0, 0, initial_state)]  
-
-    num_problems_solved = 0
-    total_cost = 0
-    total_nodes_expanded = 0
-    total_nodes_generated = 0
-    total_time = 0
-
-    while priority_queue:
-        start_time = time.time()
-        cost, _, current_state = heapq.heappop(priority_queue)
-        end_time = time.time()
-        current_city = current_state.current_id
-
-        if current_state.num_visited == num_cities and current_city == 0:
-            # Problem solved
-            num_problems_solved += 1
-            total_cost += cost
-            total_time += end_time - start_time
-
-            # Print current and next paths, total cost, and time
-            print(f"Problem {num_problems_solved}")
-            print(f"Current Path: {current_state.path}")
-            print(f"Next Path: {current_state.path + [0]}")  # Add the starting city (0)
-            print(f"Total Cost: {cost:.2f}")
-            print(f"Time: {end_time - start_time:.6f} seconds\n")
-            continue
-
-        for next_city in range(num_cities):
-            if not current_state.visited[next_city]:
-                new_cost = cost + graph[current_city][next_city]
-                new_state = State(num_cities)
-                new_state.visited = current_state.visited.copy()
-                new_state.visited[next_city] = True
-                new_state.num_visited = current_state.num_visited + 1
-                new_state.current_id = next_city
-                new_state.path = current_state.path + [current_city]  # Update the path
-
-                priority = new_cost
-                total_nodes_expanded += 1
-                total_nodes_generated += 1
-                heapq.heappush(priority_queue, (new_cost, priority, new_state))
-
-    average_cost = total_cost / num_problems_solved if num_problems_solved > 0 else float('inf')
-    average_nodes_expanded = total_nodes_expanded / num_problems_solved if num_problems_solved > 0 else 0
-    average_nodes_generated = total_nodes_generated / num_problems_solved if num_problems_solved > 0 else 0
-    average_time = total_time / num_problems_solved if num_problems_solved > 0 else float('inf')
-
-    return num_problems_solved, average_cost, average_nodes_expanded, average_nodes_generated, average_time
-
-def run_experiments_dijkstra(num_cities_list, seeds):
-    results = []
-
-    for num_cities in num_cities_list:
-        for seed in seeds:
-            graph = generate_random_graph(num_cities, seed)
-            num_problems_solved, average_cost, average_nodes_expanded, average_nodes_generated, average_time = tsp_dijkstra(graph, seed, num_cities)
-            results.append((num_cities, seed, num_problems_solved, average_cost, average_nodes_expanded, average_nodes_generated, average_time))
-
-    return results
-
-def generate_random_graph(num_cities, seed):
+    Returns:
+        - List[List[int]]: Ma trận chi phí giữa các thành phố.
+    """
     random.seed(seed)
-    graph = [[0] * num_cities for _ in range(num_cities)]
-    for i in range(num_cities):
-        for j in range(i + 1, num_cities):
-            cost = random.randint(1, 100)
-            graph[i][j] = cost
-            graph[j][i] = cost
-    return graph
+    cost_matrix = [[0] * num_cities for _ in range(num_cities)]
 
-def display_performance_summary(results):
-    # Print the header of the summary table
-    print("{:<10} {:<10} {:<20} {:<20} {:<25} {:<25} {:<25}".format("N", "Seed", "Problems Solved", "Avg Cost", "Avg Nodes Expanded", "Avg Nodes Generated", "Avg Time"))
+    for i in range(num_cities):
+        for j in range(num_cities):
+            if i != j:
+                cost = random.randint(1, 100)
+                cost_matrix[i][j] = cost
+
+    return cost_matrix
+
+
+class Reached:
+    def __init__(self, num_cities):
+        """
+        Khởi tạo đối tượng Reached để theo dõi trạng thái ghé thăm các thành phố.
+
+        Parameters:
+            - num_cities (int): Số lượng thành phố.
+        """
+        self.reached_array = [[0, 0] for _ in range(num_cities)]
+
+    def set_reached(self, city_id, visited):
+        """
+        Đặt trạng thái ghé thăm của thành phố.
+
+        Parameters:
+            - city_id (int): ID của thành phố.
+            - visited (bool): Trạng thái ghé thăm (True nếu đã ghé thăm, False nếu chưa).
+
+        Returns:
+            - None
+        """
+        if visited:
+            self.reached_array[city_id][1] = 2
+        else:
+            self.reached_array[city_id][0] = 2
+
+    def get_hash_value(self):
+        """
+        Tính giá trị hash của trạng thái ghé thăm.
+
+        Returns:
+            - int: Giá trị hash.
+        """
+        hash_value = 0
+        for id_a, id_b in self.reached_array:
+            hash_value += id_a + id_b
+        return hash_value
+
+def tsp_dijkstra(cost_matrix, time_limit_per_seed):
+    num_cities = len(cost_matrix)
     
-    # Iterate through the results and print the summary for each N and algorithm
-    for result in results:
-        num_cities, seed, num_problems_solved, average_cost, average_nodes_expanded, average_nodes_generated, average_time = result
-        print("{:<10} {:<10} {:<20} {:<20.2f} {:<25.2f} {:<25.2f} {:<25.6f}".format(
-            num_cities, seed, num_problems_solved, average_cost, average_nodes_expanded, average_nodes_generated, average_time))
+    # Tính thời điểm kết thúc tối đa
+    end_time_limit = time.time() + time_limit_per_seed
+
+    priority_queue = [(0, [0], 0, Reached(num_cities))]  # (g(n), path, cost, reached)
+    optimal_path = []
+    optimal_cost = sys.maxsize
+    expanded_nodes = 0
+    created_nodes = 0
+
+    start_time = time.time()
+
+    while priority_queue and time.time() < end_time_limit:
+        current_cost, current_path, _, current_reached = heapq.heappop(priority_queue)
+
+        current_node = current_path[-1]
+
+        if len(current_path) == num_cities and current_cost + cost_matrix[current_node][0] < optimal_cost:
+            optimal_cost = current_cost + cost_matrix[current_node][0]
+            optimal_path = current_path + [0]
+
+        for next_node in range(num_cities):
+            if next_node not in current_path:
+                new_cost = current_cost + cost_matrix[current_node][next_node]
+
+                # Tạo một Reached mới để tránh sửa đổi REACHED ban đầu, nghĩa là mỗi thành phố chỉ đi 1
+                new_reached = Reached(num_cities)
+                for i in range(num_cities):
+                    new_reached.reached_array[i] = current_reached.reached_array[i][:]
+
+                new_reached.set_reached(next_node, True)
+
+                heapq.heappush(priority_queue, (new_cost, current_path + [next_node], new_cost, new_reached))
+                created_nodes += 1
+
+        expanded_nodes += 1
+
+    end_time = time.time()
+
+    print(f"Optimal Path: {optimal_path}")
+    print(f"Optimal Cost: {optimal_cost}")
+    print(f"Running time: {end_time - start_time:.4f} seconds")
+    print(f"Expanded Nodes: {expanded_nodes}")
+    print(f"Created Nodes: {created_nodes}\n")
+    return optimal_cost, end_time - start_time, expanded_nodes, created_nodes
 
 # Example usage:
-num_cities = int(input("Enter the number of cities (N): "))
-num_seeds = int(input("Enter the number of seeds: "))
+seeds = [1, 2, 3, 4, 5]
+num_cities_values = [5, 10, 11, 12]
+time_limit_per_seed = 1200  # 20 minutes for each seed
 
-results = run_experiments_dijkstra([num_cities], range(1, num_seeds + 1))
-display_performance_summary(results)
+solved_problems = 0
+total_running_time = 0
+total_optimal_cost = 0
+total_expanded_nodes = 0
+total_created_nodes = 0
+
+for num_cities in num_cities_values:
+    for seed in seeds:
+        try:
+            cost_matrix = generate_cost_matrix(num_cities, seed)
+            solved_problems += 1
+
+            sys.stdout.reconfigure(encoding='utf-8')
+
+            print(f"n = {num_cities}, Seed = {seed}")
+            for row in cost_matrix:
+                print(row)
+            print()
+
+            optimal_cost, running_time, expanded_nodes, created_nodes = tsp_dijkstra(cost_matrix, time_limit_per_seed)
+            total_optimal_cost += optimal_cost
+            total_expanded_nodes += expanded_nodes
+            total_created_nodes += created_nodes
+            total_running_time += running_time
+
+        except Exception as e:
+            print(f"Error solving problem for n = {num_cities}, Seed = {seed}: {e}")
+
+if solved_problems > 0:
+    average_running_time = total_running_time / solved_problems
+    average_optimal_cost = total_optimal_cost / solved_problems
+    average_expanded_nodes = total_expanded_nodes / solved_problems
+    average_created_nodes = total_created_nodes / solved_problems
+
+    print(f"The number of solved problems: {solved_problems}")
+    print(f"Average run time: {average_running_time:.4f} seconds")
+    print(f"Average optimal path cost: {average_optimal_cost}")
+    print(f"Average number of expanded nodes: {average_expanded_nodes}")
+    print(f"Average number of generated nodes: {average_created_nodes}")
+else:
+    print("No problems were solved.")
