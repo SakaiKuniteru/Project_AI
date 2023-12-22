@@ -1,1 +1,1 @@
-# IDA* with the min-out heuristic function. I will describe the details of the min-out heuristic function later.
+# IDA* with the min-out heuristic function. I will describe the details of the min-out heuristic function later.  
