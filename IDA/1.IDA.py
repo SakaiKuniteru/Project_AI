@@ -27,11 +27,14 @@ def tsp_ida_star(cost_matrix):
         for next_node in range(num_cities):
             if next_node not in visited and cost_matrix[node][next_node] > 0:
                 new_cost = cost + cost_matrix[node][next_node]
-                expanded_nodes += 1
-                created_nodes += 1
-                visited.add(next_node)
-                dfs(next_node, path + [next_node], new_cost, visited)
-                visited.remove(next_node)
+                heuristic = 0
+                total_estimate = new_cost + heuristic
+                if total_estimate < optimal_cost:
+                    expanded_nodes += 1
+                    created_nodes += 1
+                    visited.add(next_node)
+                    dfs(next_node, path + [next_node], new_cost, visited)
+                    visited.remove(next_node)
 
     num_cities = len(cost_matrix)
     optimal_path = []
@@ -50,7 +53,7 @@ def tsp_ida_star(cost_matrix):
 
     print(f"Optimal Path: {optimal_path}")
     print(f"Optimal Cost: {optimal_cost}")
-    print(f"Running time: {end_time - start_time:.4f} seconds")
+    print(f"Running time: {end_time - start_time:.10f} seconds")
     print(f"Expanded Nodes: {expanded_nodes}")
     print(f"Created Nodes: {created_nodes}\n")
     return optimal_cost, end_time - start_time, expanded_nodes, created_nodes
@@ -77,7 +80,7 @@ for num_cities in num_cities_values:
                 print(row)
             print()
 
-            optimal_cost, expanded_nodes, created_nodes, running_time = tsp_ida_star(cost_matrix)
+            optimal_cost, running_time, expanded_nodes, created_nodes = tsp_ida_star(cost_matrix)
             total_optimal_cost += optimal_cost
             total_expanded_nodes += expanded_nodes
             total_created_nodes += created_nodes
@@ -92,7 +95,7 @@ average_expanded_nodes = total_expanded_nodes / solved_problems
 average_created_nodes = total_created_nodes / solved_problems
 
 print(f"The number of solved problems: {solved_problems}")
-print(f"Average run time: {average_running_time:.4f} seconds")
+print(f"Average run time: {average_running_time:.10f} seconds")
 print(f"Average optimal path cost: {average_optimal_cost}")
 print(f"Average number of expanded nodes: {average_expanded_nodes}")
 print(f"Average number of generated nodes: {average_created_nodes}")
